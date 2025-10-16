@@ -1,0 +1,81 @@
+name: Публикация пакета
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*.*.*"]
+  pull_request:
+    branches: [main]
+
+env:
+  DOTNET_VERSION: "9.0.x"
+  PACKAGE_NAME: "PlopyBlopy.JuiceLlama.Common"
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write  
+      
+    steps:
+      # Шаг 1: Получение кода
+      - name: Получить код
+        uses: actions/checkout@v4
+
+      # Шаг 2: Установка .NET
+      - name: Установить .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      # Шаг 3: Восстановление зависимостей - ИСПРАВЛЕННЫЙ ПУТЬ
+      - name: Восстановить зависимости
+        run: dotnet restore ./src/JuiceLlama.Common/JuiceLlama.Common.sln
+      
+      # Шаг 4: Сборка - ИСПРАВЛЕННЫЙ ПУТЬ
+      - name: Собрать проект
+        run: dotnet build ./src/JuiceLlama.Common/JuiceLlama.Common.sln --configuration Release --no-restore
+
+      # Шаг 5: Тесты - ИСПРАВЛЕННЫЙ ПУТЬ
+      - name: Запустить тесты
+        run: dotnet test ./src/JuiceLlama.Common/tests/JuiceLlama.Common.Tests/JuiceLlama.Common.Tests.csproj --configuration Release --no-build
+
+      # Шаг 6: Извлечение версии из тега (только для релизных сборок)
+      - name: Извлечь версию из тега
+        if: contains(github.ref, 'tags/v')
+        id: get_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "PACKAGE_VERSION=$VERSION" >> $GITHUB_ENV
+
+      # Шаг 7: Создание пакета - ИСПРАВЛЕННЫЙ ПУТЬ
+      - name: Создать пакет
+        run: |
+          dotnet pack ./src/JuiceLlama.Common/src/JuiceLlama.Common/JuiceLlama.Common.csproj \
+            --configuration Release \
+            --no-build \
+            --output ./artifacts \
+            /p:Version=${{ env.PACKAGE_VERSION || '1.0.0' }}
+
+      # Шаг 8: Публикация (только при наличии тега)
+      - name: Опубликовать в GitHub Packages
+        if: contains(github.ref, 'tags/v')
+        run: |
+          dotnet nuget add source https://nuget.pkg.github.com/PlopyBlopy/index.json \
+            --name "github" \
+            --username PlopyBlopy \
+            --password ${{ secrets.GITHUB_TOKEN }} \
+            --store-password-in-clear-text
+
+          dotnet nuget push ./artifacts/*.nupkg \
+            --source "github" \
+            --api-key ${{ secrets.GITHUB_TOKEN }} \
+            --skip-duplicate
+
+      - name: Опубликовать на nuget.org
+        if: contains(github.ref, 'tags/v')
+        run: |
+          dotnet nuget push ./artifacts/*.nupkg \
+            --source "https://api.nuget.org/v3/index.json" \
+            --api-key ${{ secrets.NUGET_API_KEY }}

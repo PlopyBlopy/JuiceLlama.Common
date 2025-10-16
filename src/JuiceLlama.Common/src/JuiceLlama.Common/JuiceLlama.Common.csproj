@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<PackageId>PlopyBlopy.JuiceLlama.Common</PackageId>
+		<Title>PlopyBlopy.JuiceLlama.Common</Title>
+		<Version>0.0.0</Version>
+		<Authors>PlopyBlopy</Authors>
+		<Description>Common library for JuiceLlama-marketplace.</Description>
+		<PackageTags>mediator</PackageTags>
+		<RepositoryUrl>https://github.com/PlopyBlopy/PlopyBlopy.JuiceLlama.Common</RepositoryUrl>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageIcon>icon.png</PackageIcon>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="FluentResults" Version="3.16.0" />
+		<PackageReference Include="FluentValidation" Version="11.11.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.4" />
+		<PackageReference Include="PlopyBlopy.FluentResults.Errors" Version="1.0.6" />
+		<PackageReference Include="Scrutor" Version="6.1.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="README.md" Pack="true" PackagePath="\" />
+		<None Include="localized\ru-ru\README.md" Pack="true" PackagePath="localized\ru-ru" />
+		<None Include="localized\en-us\README.md" Pack="true" PackagePath="localized\en-us" />
+		<None Include="icon.png" Pack="true" PackagePath="\">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+</Project>
