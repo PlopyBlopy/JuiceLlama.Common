@@ -5,77 +5,42 @@ using JuiceLlama.Common.Tests.Helpers.Types;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
-namespace UnitTests.Common
+namespace JuiceLlama.Common.Tests.UnitTests
 {
-    public class AddTypesFromAssemblyTests
+    // need tests for
+    // [ AddAssemblyDecoratorTypes ]
+
+    // TODO: указать 2 интерфейса наследуемые от IDecorator -> берется 1 наследник от декоратор, но метод Handler вызывал 2 интерфейс, поэтому этот класс декоратор не вызвался -> нужно указывать только 1 класс декоратор
+
+    // TODO: 1. проверка цепочки вызова декораторов, относительно порядка регистрации
+    //     TODO: если 2 разных декоратора
+    //     TODO: если 2 одинаковых декоратора
+    /*
+    !!! особенности порядок вызова != порядок регистрации, первый вызывается тот кто зарегестрирован позднее !!!
+    ITracingDecorator -> ILoggerDecorator -> ICacheDecorator -> IRepository
+
+    services.AddAssemblyTypes<IRepository>(Assembly.GetExecutingAssembly());
+    services.AddAssemblyDecoratorTypes<ICacheDecorator, IRepository>(Assembly.GetExecutingAssembly());
+    services.AddAssemblyDecoratorTypes<ILoggerDecorator, IRepository>(Assembly.GetExecutingAssembly());
+    services.AddAssemblyDecoratorTypes<ITracingDecorator, IRepository>(Assembly.GetExecutingAssembly());
+    */
+
+    // TODO:
+    // TODO:
+    public class AddAssemblyDecoratorTypesTests
     {
         private ServiceCollection _services;
 
-        public AddTypesFromAssemblyTests()
+        public AddAssemblyDecoratorTypesTests()
         {
             _services = new ServiceCollection();
         }
 
         [Fact]
-        public void AddAssemblyTypes_ValidData_ContainerWithTypes()
-        {
-            // Arrage
-            // Act
-            _services.AddAssemblyTypes<IRepository>(Assembly.GetExecutingAssembly());
-            using var scope = _services.BuildServiceProvider();
-
-            // Assert
-            var service = scope.GetRequiredService<ITestRepository>();
-            Assert.NotNull(service);
-        }
-
-        [Fact]
-        public void AddAssemblyTypes_UnvalidInterface_ArgumentException()
-        {
-            // Arrage
-            Action exCode;
-
-            // Act
-            exCode = () => _services.AddAssemblyTypes<TestRepository>(Assembly.GetExecutingAssembly());
-
-            // Assert
-            Assert.Throws<ArgumentException>(exCode);
-        }
-
-        [Fact]
-        public void AddAssemblyTypes_NothingTypes_InvalidOperationException()
-        {
-            // Arrage
-            Action exCode;
-
-            // Act
-            _services.AddAssemblyTypes<ITestWithoutInheritance>(Assembly.GetExecutingAssembly());
-            using var scope = _services.BuildServiceProvider();
-
-            exCode = () => scope.GetRequiredService<ITestRepository>();
-
-            // Assert
-            Assert.Throws<InvalidOperationException>(exCode);
-        }
-
-        [Fact]
-        public void AddAssemblyTypes_NothingTypes_Null()
-        {
-            // Arrage
-            // Act
-            _services.AddAssemblyTypes<ITestWithoutInheritance>(Assembly.GetExecutingAssembly());
-            using var scope = _services.BuildServiceProvider();
-
-            // Assert
-            var service = scope.GetService<ITestRepository>();
-            Assert.Null(service);
-        }
-
-        [Fact]
         public async Task AddAssemblyDecoratorTypes_ValidData_ContainerWithTypes()
         {
-            // Arrage
-            // Act
+            // Arrage & Act
+
             _services.AddAssemblyTypes<IRepository>(Assembly.GetExecutingAssembly());
             _services.AddAssemblyDecoratorTypes<IDecorator, IRepository>(Assembly.GetExecutingAssembly());
 
@@ -95,8 +60,7 @@ namespace UnitTests.Common
         [Fact]
         public async Task AddAssemblyDecoratorTypes_NothingDecorateType_NoDecorate()
         {
-            // Arrage
-            // Act
+            // Arrage & Act
             _services.AddAssemblyTypes<IRepository>(Assembly.GetExecutingAssembly());
             _services.AddAssemblyDecoratorTypes<ITestWithoutInheritance, IRepository>(Assembly.GetExecutingAssembly());
 
@@ -117,16 +81,19 @@ namespace UnitTests.Common
         public void AddAssemblyDecoratorTypes_UnvalidInterface_ArgumentException()
         {
             // Arrage
-            Action exITestRepository;
+            Action exITestDecorated;
             Action exITestDecorator;
 
             // Act
-            exITestRepository = () => _services.AddAssemblyDecoratorTypes<ITestDecorator, TestRepository>(Assembly.GetExecutingAssembly());
+            exITestDecorated = () => _services.AddAssemblyDecoratorTypes<ITestDecorator, TestRepository>(Assembly.GetExecutingAssembly());
             exITestDecorator = () => _services.AddAssemblyDecoratorTypes<TestDecorator, IRepository>(Assembly.GetExecutingAssembly());
 
             // Assert
-            Assert.Throws<ArgumentException>(typeof(TestRepository).ToString(), exITestRepository);
-            Assert.Throws<ArgumentException>(typeof(TestDecorator).ToString(), exITestDecorator);
+            var exDecorated = Assert.Throws<ArgumentException>(exITestDecorated);
+            var exDecorator = Assert.Throws<ArgumentException>(exITestDecorator);
+
+            Assert.Equal("TDecorated", exDecorated.ParamName);
+            Assert.Equal("TDecorator", exDecorator.ParamName);
         }
 
         [Fact]
